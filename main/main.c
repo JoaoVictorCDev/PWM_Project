@@ -4,6 +4,7 @@
 #include "driver/ledc.h"
 
 #define LED_PIN 23
+#define BUTTON_ON 5
 
 #define LEDC_TIMER LEDC_TIMER_0        // escolher o timer
 #define LEDC_MODE LEDC_HIGH_SPEED_MODE // Define como o PWM Funciona (NO CASO TA FALANDO QUE VAI SER 100% POR HARDWARE)
@@ -39,30 +40,43 @@ void pwm_channel_init(void)
 
 void set_brilho(uint8_t duty)
 {
-    ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty); //ledc_set_duty → prepara o novo valor
-    ledc_update_duty(LEDC_MODE, LEDC_CHANNEL); //ledc_update_duty → aplica no hardware
+    ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, duty); // ledc_set_duty → prepara o novo valor
+    ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);    // ledc_update_duty → aplica no hardware
 }
 
 void app_main(void)
 {
-    //Aqui você liga o PWM.
+    // Aqui você liga o PWM.
     pwm_timer_init();
     pwm_channel_init();
-    //Aqui você liga o PWM.
-    
+    // Aqui você liga o PWM.
+
+    gpio_reset_pin(BUTTON_ON);
+    gpio_set_direction(BUTTON_ON, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON_ON, GPIO_PULLUP_ONLY);
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    printf("SISTEMA ON\n");
+
     while (1)
     {
+        int ver_but = gpio_get_level(BUTTON_ON);
+        vTaskDelay(pdMS_TO_TICKS(10));
 
-        for (int i = 0; i <= 255; i++)
+        if (ver_but == 0)
         {
-            set_brilho(i);
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+            printf("acionando!");
+            for (int i = 0; i <= 255; i++)
+            {
+                set_brilho(i);
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
 
-        for (int i = 255; i >= 0; i--)
-        {
-            set_brilho(i);
-            vTaskDelay(pdMS_TO_TICKS(10));
+            for (int i = 255; i >= 0; i--)
+            {
+                set_brilho(i);
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
         }
     }
 }
